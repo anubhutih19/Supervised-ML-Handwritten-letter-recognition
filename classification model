@@ -1,0 +1,78 @@
+# feel free to use the following column names when you read in the data.
+col_names = ['lettr', 'x-box', 'y-box', 'width', 'high', 'onpix', 'x-bar', 'y-bar', 
+             'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br', 'x-ege', 'xegvy', 'y-ege', 'yegvx']
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/letter-recognition.data')
+df
+#defining target column
+target = df['T']
+
+#renaming the columns
+
+df.rename(columns = {'T':'lettr', '2': 'x-box', '8': 'y-box','3':'width', '5': 'high', '1': 'onpix','8.1' :'x-bar',
+                     '13':'y-bar', '0': 'x2bar','6':'y2bar','6.1':'xybar','10':'x2ybr','8.2': 'xy2br',
+                     '0.1': 'x-ege', '8.3':'xegvy','0.2': 'y-ege', '8.4':'yegvx'},inplace = True)
+
+### 1.
+### Use the train_test_split function in scikit-learn to split the data with 15% for testing and the rest for training. Use a random_state of 45 when splitting.
+
+data= df[['x-box', 'y-box', 'width', 'high', 'onpix', 'x-bar', 'y-bar', 
+             'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br', 'x-ege', 'xegvy', 'y-ege', 'yegvx']]
+
+#split data
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(data, target,test_size = 0.15, random_state =45) 
+
+
+#### Setting k = 3 
+### #instantiate
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(n_neighbors=3)
+
+#training
+knn.fit(X_train,y_train)
+
+## Evaluate the classifier performance using the test set. What is the accuracy of the trained classifier?
+
+y_pred = knn.predict(X_test)
+
+[(true,pred) for (true,pred) in zip(y_test,y_pred) ]
+
+##Accuracy of the classifier
+from sklearn import metrics
+
+metrics.accuracy_score(y_test,y_pred).round(3)
+
+##Use the seaborn heatmap to visualize the confusion matrix of the classification result (based on the test set) that highlights the misclassifications.
+#CONFUSION METRICS
+
+import string
+alphabet_string = list(string.ascii_uppercase)
+
+
+cm = metrics.confusion_matrix(y_test,y_pred)
+
+df_cm = pd.DataFrame(data=cm, columns = alphabet_string, index = alphabet_string)
+
+# heatmap
+import seaborn as sns
+plt.figure(figsize=(20,15))
+
+sns. heatmap(data= df_cm, cmap ='nipy_spectral_r', annot =True) 
+
+plt.title('Heatmap of classification result', fontsize =20)
+
+##Hyperparameter tuning
+
+from sklearn.model_selection import cross_val_score
+
+for k in range(1,20,2): 
+    knn = KNeighborsClassifier(n_neighbors=k) 
+    score =cross_val_score(knn,data, target, cv=5)
+    
+    print("k=" , k ,  ' ; mean accuracy: ', score.mean().round(3), ' ; Standard deviation', score.std().mean().round(3) )
